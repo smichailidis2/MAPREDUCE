@@ -23,4 +23,31 @@ from kazoo.client import KazooClient
 zk = KazooClient(hosts='zookeeper:2181')
 zk.start()
 ```
-
+2. Create a ZNode:
+```python
+zk.create("/mapreduce", b"initial_data", ephemeral=True, makepath=True)
+```
+3. Check if a ZNode Exists:
+```python
+if zk.exists("/mapreduce"):
+    print("ZNode exists")
+```
+4. Get Data from a ZNode:
+```python
+data, stat = zk.get("/mapreduce")
+print("Data: %s" % data.decode("utf-8"))
+```
+5. Set Data in a ZNode:
+```python
+zk.set("/mapreduce", b"new_data")
+```
+6. Watch for Changes on a ZNode:
+```python
+def watch_node(event):
+    print("Data changed")
+zk.DataWatch("/mapreduce", watch_node)
+```
+7. Delete a ZNode
+```python
+zk.delete("/mapreduce")
+```
