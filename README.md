@@ -20,12 +20,12 @@ To use Zookeeper for data synchronization use the following commands in the work
 1. Connect to Zookeeper:
 ```python
 from kazoo.client import KazooClient
-zk = KazooClient(hosts='zookeeper:2181')
+zk = KazooClient(hosts='zookeeper-0.zookeeper,zookeeper-1.zookeeper,zookeeper-2.zookeeper:2181')
 zk.start()
 ```
 2. Create a ZNode:
 ```python
-zk.create("/mapreduce", b"initial_data", ephemeral=True, makepath=True)
+zk.create("/mapreduce", b"my_data", ephemeral=True, makepath=True)
 ```
 3. Check if a ZNode Exists:
 ```python
