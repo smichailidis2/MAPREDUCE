@@ -6,12 +6,12 @@ To use NFS storage, mount the PVC in your pods like this:
 ```yaml
 spec:
     volumes:
-    - name: glusterfs-storage
+    - name: nfs-storage
         persistentVolumeClaim:
-        claimName: glusterfs-pvc
+        claimName: nfs-pvc
     volumeMounts:
     - mountPath: /data
-        name: glusterfs-storage
+        name: nfs-storage
 ```
 
 
