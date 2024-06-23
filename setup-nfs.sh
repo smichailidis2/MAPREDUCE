@@ -1,9 +1,23 @@
-#filesystem-setup.sh
 #!/bin/bash
 
-# Apply NFS server deployment and service
-echo "Applying NFS server deployment and service..."
-kubectl apply -f nfs-server.yaml
+# Delete GlusterFS StatefulSet, service, and PVC if they exist
+echo "Deleting GlusterFS StatefulSet, service, and PVC if they exist..."
+kubectl delete statefulset glusterfs --ignore-not-found=true
+kubectl delete service glusterfs --ignore-not-found=true
+kubectl delete pvc glusterfs-pvc --ignore-not-found=true
+kubectl delete pv glusterfs-pv --ignore-not-found=true
+
+# Delete existing NFS resources if they exist
+echo "Deleting existing NFS resources if they exist..."
+kubectl delete deployment nfs-server --ignore-not-found=true
+kubectl delete service nfs-server --ignore-not-found=true
+kubectl delete pvc nfs-pvc --ignore-not-found=true
+kubectl delete pv nfs-pv --ignore-not-found=true
+
+# Apply NFS server service and deployment
+echo "Applying NFS server service and deployment..."
+kubectl apply -f nfs/nfs-service.yaml
+kubectl apply -f nfs/nfs-deployment.yaml
 
 # Wait for NFS server to be ready
 echo "Waiting for NFS server to be ready..."
@@ -11,8 +25,8 @@ kubectl wait --for=condition=ready pod -l app=nfs-server --timeout=120s
 
 # Apply Persistent Volume and Persistent Volume Claim
 echo "Applying Persistent Volume and Persistent Volume Claim..."
-kubectl apply -f nfs-pv.yaml
-kubectl apply -f nfs-pvc.yaml
+kubectl apply -f nfs/nfs-pv.yaml
+kubectl apply -f nfs/nfs-pvc.yaml
 
 # Verify NFS setup
 echo "Verifying NFS setup..."

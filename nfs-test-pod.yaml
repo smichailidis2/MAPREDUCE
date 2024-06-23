@@ -1,3 +1,4 @@
+# nfs-test-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -6,7 +7,7 @@ spec:
   containers:
   - name: nfs-test-container
     image: busybox
-    command: ['sh', '-c', 'echo Hello Kubernetes! > /mnt/data/hello.txt && cat /mnt/data/hello.txt && sleep 3600']
+    command: ['sh', '-c', 'echo Hello Kubernetes! > /mnt/data/hello.txt && sleep 3600']
     volumeMounts:
     - name: nfs-volume
       mountPath: /mnt/data

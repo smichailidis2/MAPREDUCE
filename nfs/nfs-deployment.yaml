@@ -1,17 +1,3 @@
-#nfs-server.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: nfs-server
-  labels:
-    app: nfs-server
-spec:
-  ports:
-  - port: 2049
-    name: nfs
-  selector:
-    app: nfs-server
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
