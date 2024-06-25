@@ -34,7 +34,7 @@ echo "NFS PVC deleted successfully."
 
 # Wait for all PVs to be cleaned up or deleted
 echo "Waiting for all PVs to be completely cleaned up..."
-while kubectl get pv | grep -q 'Released\|Bound'; do
+while kubectl get pv | grep -q 'sad/' | grep -q 'Released\|Bound'; do
   echo "Still cleaning up PVs..."
   sleep 10
 done
@@ -47,7 +47,7 @@ kubectl apply -f nfs/nfs-deployment.yaml
 
 # Wait for NFS server to be ready
 echo "Waiting for NFS server to be ready..."
-kubectl wait --for=condition=ready pod -l app=nfs-server --timeout=300s
+kubectl wait --for=condition=ready pod -l app=nfs-server --timeout=120s
 
 # Apply Persistent Volume and Persistent Volume Claim
 echo "Applying Persistent Volume and Persistent Volume Claim..."
@@ -55,10 +55,10 @@ kubectl apply -f nfs/nfs-pv.yaml
 kubectl apply -f nfs/nfs-pvc.yaml
 
 # Verify NFS setup
-echo "Verifying NFS setup..."
-kubectl get pods -l app=nfs-server
-kubectl get pv
-kubectl get pvc
+# echo "Verifying NFS setup..."
+# kubectl get pods -l app=nfs-server
+# kubectl get pv
+# kubectl get pvc
 
 # Apply ZooKeeper StatefulSet (if you need to redeploy it)
 echo "Applying ZooKeeper StatefulSet..."
@@ -66,21 +66,21 @@ kubectl apply -f zookeeper-statefulset.yaml
 
 # Wait for ZooKeeper to be ready
 echo "Waiting for ZooKeeper to be ready..."
-kubectl wait --for=condition=ready pod -l app=zookeeper --timeout=300s
+kubectl wait --for=condition=ready pod -l app=zookeeper --timeout=120s
 
 # Verify ZooKeeper setup
-echo "Verifying ZooKeeper setup..."
-kubectl get pods -l app=zookeeper
+# echo "Verifying ZooKeeper setup..."
+# kubectl get pods -l app=zookeeper
 
 echo "Setup complete. The following resources are available:"
-echo "NFS Server Pod:"
-kubectl get pods -l app=nfs-server
-echo "Persistent Volume:"
-kubectl get pv
-echo "Persistent Volume Claim:"
-kubectl get pvc
-echo "Zookeeper Pods:"
-kubectl get pods -l app=zookeeper
+# echo "NFS Server Pod:"
+# kubectl get pods -l app=nfs-server
+# echo "Persistent Volume:"
+# kubectl get pv
+# echo "Persistent Volume Claim:"
+# kubectl get pvc
+# echo "Zookeeper Pods:"
+# kubectl get pods -l app=zookeeper
 
 echo "To use the NFS storage, mount the PVC in your pods like this:"
 echo "volumes:"

@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sad
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: master
+  namespace: sad
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: master
+  template:
+    metadata:
+      labels:
+        app: master
+    spec:
+      containers:
+      - name: master
+        image: dkeramidas1/master_node:v01
+        env:
+        - name: ZOOKEEPER_HOST
+          value: zookeeper-0.zookeeper,zookeeper-1.zookeeper,zookeeper-2.zookeeper:2181
+        - name: NAMESPACE
+          value: sad
+        - name: NUM_MAPPERS
+          value: "3"
+        - name: NUM_REDUCERS
+          value: "2"
+      serviceAccountName: job-creator
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: job-creator
+  namespace: sad
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: sad
+  name: job-creator-role
+rules:
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["create"]
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: job-creator-binding
+  namespace: sad
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: job-creator-role
+subjects:
+- kind: ServiceAccount
+  name: job-creator
+  namespace: sad
