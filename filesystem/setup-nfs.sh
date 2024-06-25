@@ -64,9 +64,9 @@ kubectl apply -f filesystem/nfs/nfs-pv.yaml
 kubectl apply -f filesystem/nfs/nfs-pvc.yaml -n $NAMESPACE
 
 echo "Verifying NFS setup..."
-kubectl get pods -l app=nfs-server -n $NAMESPACE
-kubectl get pv
-kubectl get pvc -n $NAMESPACE
+# kubectl get pods -l app=nfs-server -n $NAMESPACE
+# kubectl get pv
+# kubectl get pvc -n $NAMESPACE
 
 echo "Applying ZooKeeper StatefulSet..."
 kubectl apply -f filesystem/zookeeper-statefulset.yaml -n $NAMESPACE
@@ -77,15 +77,15 @@ kubectl wait --for=condition=ready pod -l app=zookeeper -n $NAMESPACE --timeout=
 echo "Verifying ZooKeeper setup..."
 kubectl get pods -l app=zookeeper -n $NAMESPACE
 
-echo "Setup complete. The following resources are available:"
-echo "NFS Server Pod:"
-kubectl get pods -l app=nfs-server -n $NAMESPACE
-echo "Persistent Volume:"
-kubectl get pv
-echo "Persistent Volume Claim:"
-kubectl get pvc -n $NAMESPACE
-echo "Zookeeper Pods:"
-kubectl get pods -l app=zookeeper -n $NAMESPACE
+# echo "Setup complete. The following resources are available:"
+# echo "NFS Server Pod:"
+# kubectl get pods -l app=nfs-server -n $NAMESPACE
+# echo "Persistent Volume:"
+# kubectl get pv
+# echo "Persistent Volume Claim:"
+# kubectl get pvc -n $NAMESPACE
+# echo "Zookeeper Pods:"
+# kubectl get pods -l app=zookeeper -n $NAMESPACE
 
 echo "To use the NFS storage, mount the PVC in your pods like this:"
 echo "volumes:"
