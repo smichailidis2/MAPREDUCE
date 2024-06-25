@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nfs-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nfs-server
+  template:
+    metadata:
+      labels:
+        app: nfs-server
+    spec:
+      containers:
+      - name: nfs-server
+        image: itsthenetwork/nfs-server-alpine:latest
+        ports:
+        - name: nfs
+          containerPort: 2049
+        securityContext:
+          privileged: true
+        env:
+        - name: SHARED_DIRECTORY
+          value: /exports
+        args:
+        - /exports
+        volumeMounts:
+        - name: nfs-volume
+          mountPath: /exports
+        livenessProbe:
+          exec:
+            command: ["sh", "-c", "ls /exports"]
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command: ["sh", "-c", "ls /exports"]
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      volumes:
+      - name: nfs-volume
+        persistentVolumeClaim:
+          claimName: nfs-pvc

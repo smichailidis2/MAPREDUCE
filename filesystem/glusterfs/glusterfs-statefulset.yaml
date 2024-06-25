@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: glusterfs
+spec:
+  serviceName: "glusterfs"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: glusterfs
+  template:
+    metadata:
+      labels:
+        app: glusterfs
+    spec:
+      containers:
+      - name: glusterfs
+        image: gluster/gluster-centos:latest
+        ports:
+        - containerPort: 24007
+        volumeMounts:
+        - name: glusterfs-storage
+          mountPath: /var/lib/glusterd
+  volumeClaimTemplates:
+  - metadata:
+      name: glusterfs-storage
+    spec:
+      accessModes: [ "ReadWriteMany" ]
+      resources:
+        requests:
+          storage: 1Gi
