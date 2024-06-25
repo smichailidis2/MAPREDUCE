@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: zookeeper
+  namespace: sad
 spec:
   serviceName: "zookeeper"
   replicas: 3

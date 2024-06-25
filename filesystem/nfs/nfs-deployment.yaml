@@ -1,7 +1,9 @@
+#nfs-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nfs-server
+  namespace: sad
 spec:
   replicas: 1
   selector:
