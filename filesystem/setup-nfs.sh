@@ -47,7 +47,7 @@ kubectl apply -f nfs/nfs-deployment.yaml
 
 # Wait for NFS server to be ready
 echo "Waiting for NFS server to be ready..."
-kubectl wait --for=condition=ready pod -l app=nfs-server --timeout=120s
+kubectl wait --for=condition=ready pod -l app=nfs-server --timeout=300s
 
 # Apply Persistent Volume and Persistent Volume Claim
 echo "Applying Persistent Volume and Persistent Volume Claim..."
@@ -66,7 +66,7 @@ kubectl apply -f zookeeper-statefulset.yaml
 
 # Wait for ZooKeeper to be ready
 echo "Waiting for ZooKeeper to be ready..."
-kubectl wait --for=condition=ready pod -l app=zookeeper --timeout=120s
+kubectl wait --for=condition=ready pod -l app=zookeeper --timeout=300s
 
 # Verify ZooKeeper setup
 echo "Verifying ZooKeeper setup..."
