@@ -1,7 +1,9 @@
+#nfs-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: nfs-server
+  namespace: sad
   labels:
     app: nfs-server
 spec:

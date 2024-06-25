@@ -1,86 +1,91 @@
+#setup-nfs.sh
 #!/bin/bash
 
-# Delete GlusterFS StatefulSet, service, and PVC if they exist
+NAMESPACE=sad
+
+echo "Applying namespace configuration..."
+kubectl apply -f filesystem/namespace.yaml
+
+kubectl get namespace $NAMESPACE || kubectl create namespace $NAMESPACE
+
 echo "Deleting GlusterFS StatefulSet, service, and PVC if they exist..."
-kubectl delete statefulset glusterfs --ignore-not-found=true
-kubectl delete service glusterfs --ignore-not-found=true
-kubectl delete pvc glusterfs-pvc --ignore-not-found=true
+kubectl delete statefulset glusterfs -n $NAMESPACE --ignore-not-found=true
+kubectl delete service glusterfs -n $NAMESPACE --ignore-not-found=true
+kubectl delete pvc glusterfs-pvc -n $NAMESPACE --ignore-not-found=true
 kubectl delete pv glusterfs-pv --ignore-not-found=true
 
-# Delete existing NFS resources if they exist
 echo "Deleting existing NFS resources if they exist..."
-kubectl delete deployment nfs-server --ignore-not-found=true
-kubectl delete service nfs-server --ignore-not-found=true
-kubectl delete pvc nfs-pvc --ignore-not-found=true --force --grace-period=0
+kubectl delete deployment nfs-server -n $NAMESPACE --ignore-not-found=true
+kubectl delete service nfs-server -n $NAMESPACE --ignore-not-found=true
+kubectl delete pod -l app=nfs-server -n $NAMESPACE --ignore-not-found=true
+kubectl patch pvc nfs-pvc -n $NAMESPACE -p '{"metadata":{"finalizers":null}}'
+kubectl delete pvc nfs-pvc -n $NAMESPACE --ignore-not-found=true --force --grace-period=0
 kubectl delete pv nfs-pv --ignore-not-found=true
 
-# Delete ZooKeeper StatefulSet and associated resources
 echo "Deleting ZooKeeper StatefulSet and associated resources..."
-kubectl delete statefulset zookeeper --ignore-not-found=true
-kubectl delete service zookeeper --ignore-not-found=true
-# Assuming ZooKeeper uses a PVC, you would delete it here as well. Adjust the PVC name as necessary.
-kubectl delete pvc zookeeper-data-zookeeper-0 --ignore-not-found=true
-kubectl delete pvc zookeeper-data-zookeeper-1 --ignore-not-found=true
-kubectl delete pvc zookeeper-data-zookeeper-2 --ignore-not-found=true
+kubectl delete statefulset zookeeper -n $NAMESPACE --ignore-not-found=true
+kubectl delete service zookeeper -n $NAMESPACE --ignore-not-found=true
+kubectl delete pvc zookeeper-data-zookeeper-0 -n $NAMESPACE --ignore-not-found=true
+kubectl delete pvc zookeeper-data-zookeeper-1 -n $NAMESPACE --ignore-not-found=true
+kubectl delete pvc zookeeper-data-zookeeper-2 -n $NAMESPACE --ignore-not-found=true
 
-# Ensure the NFS PVC is completely deleted before proceeding
 echo "Waiting for NFS PVC to be fully deleted..."
-while kubectl get pvc nfs-pvc > /dev/null 2>&1; do
+while kubectl get pvc nfs-pvc -n $NAMESPACE &>/dev/null; do
   echo "Waiting for deletion of nfs-pvc..."
   sleep 5
 done
 echo "NFS PVC deleted successfully."
 
-
-# Wait for all PVs to be cleaned up or deleted
 echo "Waiting for all PVs to be completely cleaned up..."
+TIMEOUT=120
+ELAPSED=0
+SLEEP_INTERVAL=10
+
 while kubectl get pv | grep -q 'Released\|Bound'; do
-  echo "Still cleaning up PVs..."
-  sleep 10
+  echo "Waiting for all PVs to be completely cleaned up..."
+  sleep $SLEEP_INTERVAL
+  ELAPSED=$((ELAPSED + SLEEP_INTERVAL))
+  if [ $ELAPSED -ge $TIMEOUT ]; then
+    echo "Timeout reached. Forcibly deleting any remaining PVs."
+    kubectl get pv | grep 'Released\|Bound' | awk '{print $1}' | xargs kubectl delete pv --force --grace-period=0
+    break
+  fi
 done
-echo "All PVs are cleaned up."
 
-# Apply NFS server service and deployment
 echo "Applying NFS server service and deployment..."
-kubectl apply -f nfs/nfs-service.yaml
-kubectl apply -f nfs/nfs-deployment.yaml
+kubectl apply -f filesystem/nfs/nfs-service.yaml -n $NAMESPACE
+kubectl apply -f filesystem/nfs/nfs-deployment.yaml -n $NAMESPACE
 
-# Wait for NFS server to be ready
-echo "Waiting for NFS server to be ready..."
-kubectl wait --for=condition=ready pod -l app=nfs-server --timeout=300s
+#echo "Waiting for NFS server to be ready..."
+#kubectl wait --for=condition=ready pod -l app=nfs-server -n $NAMESPACE --timeout=300s
 
-# Apply Persistent Volume and Persistent Volume Claim
 echo "Applying Persistent Volume and Persistent Volume Claim..."
-kubectl apply -f nfs/nfs-pv.yaml
-kubectl apply -f nfs/nfs-pvc.yaml
+kubectl apply -f filesystem/nfs/nfs-pv.yaml
+kubectl apply -f filesystem/nfs/nfs-pvc.yaml -n $NAMESPACE
 
-# Verify NFS setup
 echo "Verifying NFS setup..."
-kubectl get pods -l app=nfs-server
+kubectl get pods -l app=nfs-server -n $NAMESPACE
 kubectl get pv
-kubectl get pvc
+kubectl get pvc -n $NAMESPACE
 
-# Apply ZooKeeper StatefulSet (if you need to redeploy it)
 echo "Applying ZooKeeper StatefulSet..."
-kubectl apply -f zookeeper-statefulset.yaml
+kubectl apply -f filesystem/zookeeper-statefulset.yaml -n $NAMESPACE
 
-# Wait for ZooKeeper to be ready
 echo "Waiting for ZooKeeper to be ready..."
-kubectl wait --for=condition=ready pod -l app=zookeeper --timeout=300s
+kubectl wait --for=condition=ready pod -l app=zookeeper -n $NAMESPACE --timeout=300s
 
-# Verify ZooKeeper setup
 echo "Verifying ZooKeeper setup..."
-kubectl get pods -l app=zookeeper
+kubectl get pods -l app=zookeeper -n $NAMESPACE
 
 echo "Setup complete. The following resources are available:"
 echo "NFS Server Pod:"
-kubectl get pods -l app=nfs-server
+kubectl get pods -l app=nfs-server -n $NAMESPACE
 echo "Persistent Volume:"
 kubectl get pv
 echo "Persistent Volume Claim:"
-kubectl get pvc
+kubectl get pvc -n $NAMESPACE
 echo "Zookeeper Pods:"
-kubectl get pods -l app=zookeeper
+kubectl get pods -l app=zookeeper -n $NAMESPACE
 
 echo "To use the NFS storage, mount the PVC in your pods like this:"
 echo "volumes:"

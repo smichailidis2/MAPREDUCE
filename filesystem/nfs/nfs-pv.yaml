@@ -8,8 +8,9 @@ spec:
     storage: 1Gi
   accessModes:
     - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain  # This line changes the reclaim policy
+  persistentVolumeReclaimPolicy: Retain
   nfs:
     path: /exports
-    server: nfs-server.default.svc.cluster.local
+    server: nfs-server.sad.svc.cluster.local 
+
 
