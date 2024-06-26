@@ -29,7 +29,7 @@ def create_worker_jobs(num_mappers, num_reducers):
         job_manifest = {
             "apiVersion": "batch/v1",
             "kind": "Job",
-            "metadata": {"name": job_name},
+            "metadata": {"name": job_name, "namespace": "sad"},
             "spec": {
                 "template": {
                     "metadata": {"labels": {"app": "worker", "type": "mapper"}},
@@ -40,7 +40,7 @@ def create_worker_jobs(num_mappers, num_reducers):
                                 "image": "dkeramidas1/worker_node:v01",
                                 "env": [
                                     {"name": "MODE", "value": "mapper"},
-                                    {"name": "ZOOKEEPER_HOST", "value": "zookeeper-0.zookeeper,zookeeper-1.zookeeper,zookeeper-2.zookeeper:2181"},
+                                    {"name": "ZOOKEEPER_HOST", "value": "zk-cs.sad.svc.cluster.local:2181"},
                                     {"name": "NAMESPACE", "value": "sad"}
                                 ]
                             }
@@ -59,7 +59,7 @@ def create_worker_jobs(num_mappers, num_reducers):
         job_manifest = {
             "apiVersion": "batch/v1",
             "kind": "Job",
-            "metadata": {"name": job_name},
+            "metadata": {"name": job_name, "namespace": "sad"},
             "spec": {
                 "template": {
                     "metadata": {"labels": {"app": "worker", "type": "reducer"}},
@@ -70,7 +70,7 @@ def create_worker_jobs(num_mappers, num_reducers):
                                 "image": "dkeramidas1/worker_node:v01",
                                 "env": [
                                     {"name": "MODE", "value": "reducer"},
-                                    {"name": "ZOOKEEPER_HOST", "value": "zookeeper-0.zookeeper,zookeeper-1.zookeeper,zookeeper-2.zookeeper:2181"},
+                                    {"name": "ZOOKEEPER_HOST", "value": "zk-cs.sad.svc.cluster.local:2181"},
                                     {"name": "NAMESPACE", "value": "sad"},
                                     {"name": "NODE_ID", "value": str(i)}
                                 ]
@@ -84,14 +84,16 @@ def create_worker_jobs(num_mappers, num_reducers):
         }
         create_job(batch_v1, job_manifest)
 
-# if __name__ == "__main__":
-#     num_mappers = int(os.getenv('NUM_MAPPERS', 3))
-#     num_reducers = int(os.getenv('NUM_REDUCERS', 2))
+if __name__ == "__main__":
+    num_mappers = 3#int(os.getenv('NUM_MAPPERS', 3))
+    num_reducers = 2#int(os.getenv('NUM_REDUCERS', 2))
 
-#     zk = initialize_zookeeper()
-#     zk.ensure_path("/tasks")
+    zk = initialize_zookeeper()
+    # zk.ensure_path("/tasks")
     
-#     create_worker_jobs(num_mappers, num_reducers)
+    create_worker_jobs(num_mappers, num_reducers)
     
-#     print("Tasks assigned and jobs created.")
-#     zk.stop()
+
+
+    print("Tasks assigned and jobs created.")
+    zk.stop()
