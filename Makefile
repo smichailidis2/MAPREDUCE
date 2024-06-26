@@ -4,6 +4,10 @@ default:
 build:
 	@make -C worker build
 	@make -C master build
+	
+publish:
+	@make -C worker publish
+	@make -C master publish
 
 appclean:
 	@kubectl delete deployment master

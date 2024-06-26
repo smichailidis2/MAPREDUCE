@@ -2,8 +2,7 @@ import os
 import sys
 import time
 from kazoo.client import KazooClient
-from mapreducef import mapperf
-from mapreducef import reducerf
+import json
 
 def initialize_zookeeper():
     zk_host = os.getenv('ZOOKEEPER_HOST')
@@ -12,53 +11,52 @@ def initialize_zookeeper():
     return zk
 
 def mapper():
-    # print("Running mapper task.")
+    print("Running mapper task.")
     # Mapper logic here
+    
+    data, stat = zk.get(f"/tomapp_{node_id}.txt")
+    
+    results = {}
+    words = data.decode("utf-8").split()
+    for word in words:
+        if word not in results:
+            results[word] = 0
+        results[word] += 1
+    
     print("Mapped!!!\n")
-    
-    # if(zk.exists(f"/mapreduce/inmapper_{node_id}.txt")):
-    #     data, stat = zk.get(f"/mapreduce/inmapper_{node_id}.txt")
-    
-    # results = []
-    # words = data.decode("utf-8").split()
-    # for word in words:
-    #     results.append((word, 1))
-    
-    # if(zk.exists(f"/mapreduce/shuffled_{node_id}.txt")):
-    #     zk.set(f"/mapreduce/shuffled_{node_id}.txt", shuffler(results).encode("utf-8"))
-    # else:
-    #     zk.create(f"/mapreduce/shuffled_{node_id}.txt", shuffler(results).encode("utf-8"))
+
+    shuffler(results)
 
 def shuffler(mapped_data):
-    # print("Running shuffler task.")
+    print("Running shuffler task.")
     # Shuffler logic here
     
-    shuffled_data = {}
     for key, value in mapped_data:
-        if key not in shuffled_data:
-            shuffled_data[key] = []
-        shuffled_data[key].append(value)
-    return shuffled_data
+        print(f"{key}, {value}")
+        zk.ensure_path(f"/mapp_{node_id}/{key}")
+        zk.set(f"/mapp_{node_id}/{key}", (f"\"{key}\": {value}").encode("utf-8"))
+    
+    print("Shuffled!!!\n")
 
 def reducer():
-    # print("Running reducer task.")
+    print("Running reducer task.")
     # Reducer logic here
+    
+    data, stat = zk.get(f"/toreduce_{node_id}.txt")
+    
+    results = []
+    words = data.decode("utf-8")
+    for word in words:
+        results.append((word, 1))
+    
+    print("Mapped!!!\n")
+
+    shuffler(results)
+
     print("Reduced!!!\n")
-    # if(zk.ensure_path(f"/mapreduce/inshuffler_{node_id}.txt")):
-    #     shuffled_data, stat = zk.get(f"/mapreduce/inshuffler_{node_id}.txt")
-    
-    # reduced_data = []
-    # for key, values in shuffled_data.decode("utf-8").items():
-    #     reduced_data.append((key, sum(values)))
-    
-    # if(zk.exists(f"/mapreduce/reduced_{node_id}.txt")):
-    #     zk.set(f"/mapreduce/reduced_{node_id}.txt", shuffler(reduced_data).encode("utf-8"))
-    # else:
-    #     zk.create(f"/mapreduce/reduced_{node_id}.txt", shuffler(reduced_data).encode("utf-8"))
 
 if __name__ == "__main__":
     zk = initialize_zookeeper()
-    zk_path = "/mapreduce"
     node_id = os.getenv('NODE_ID')
     mode = os.getenv('MODE')
 
@@ -69,5 +67,5 @@ if __name__ == "__main__":
     elif mode == 'reducer':
         reducer()
 
-    # print(f"Node {node_id} completed {mode} task.")
+    print(f"Node {node_id} completed {mode} task.")
     zk.stop()
