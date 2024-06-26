@@ -8,30 +8,36 @@ import uuid
 
 app = Flask(__name__)
 
-USER_DATA_DIR = '/path/to/user_data' #todo
+USER_FILE = '/data/users/'
+
+
+if not os.path.exists(USER_FILE):
+    with open(USER_FILE, 'w') as f:
+        json.dump({}, f)
 
 def get_user_file_path(username): #todo
-    return os.path.join(USER_DATA_DIR, f'{username}.json')
+    return os.path.join(USER_FILE, f'{username}.json')
 
-def create_user(username, passwordin):
-    if os.path.exists(get_user_file_path(username)):
+def create_user(username, password):
+    user_file_path = get_user_file_path(username)
+    if os.path.exists(user_file_path):
         return False, "User already exists"
     
-    # user_data = f"{ "username": {username}, "password_hash": {generate_password_hash(passwordin, method='pbkdf2:sha256')}, "token": str(uuid.uuid4())}"
-    user_data = {}
     user_data["username"] = username
-    user_data["password"] = generate_password_hash(passwordin, method='pbkdf2:sha256')
+    user_data["password_hash"] = generate_password_hash(password, method='pbkdf2:sha256')
     user_data["token"] = str(uuid.uuid4())
     
-    with open(USER_DATA_DIR, 'w') as user_file:
+    
+    with open(user_file_path, 'w') as user_file:
         json.dump(user_data, user_file)
     
     return True, "User created successfully"
 
 
-def delete_user(username, password):
-    if not os.path.exists(get_user_file_path(username)):
-        return False, "User does not exist!"
+#def delete_user(username, password):
+#    user_file_path = get_user_file_path(username)
+#    if not os.path.exists(user_file_path):
+#        return False, "User does not exist!"
 
     # todo
 
@@ -47,8 +53,8 @@ def get_user(username):
     return user_data
 
 def get_user_by_token(token):
-    for filename in os.listdir(USER_DATA_DIR):
-        file_path = os.path.join(USER_DATA_DIR, filename)
+    for filename in os.listdir(USER_FILE):
+        file_path = os.path.join(USER_FILE, filename)
         with open(file_path, 'r') as user_file:
             user_data = json.load(user_file)
             if user_data['token'] == token:
@@ -89,13 +95,13 @@ def register():
     user_data = get_user(username)
     return jsonify({"message": "User registered successfully", "token": user_data['token']}), 201
 
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['POST']) #
 def login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
 
-    user = Flask.User.query.filter_by(username=username).first()
+    user = User.query.filter_by(username=username).first()
 
     if not user or not check_password_hash(user.password, password):
         return jsonify({"message": "Invalid credentials"}), 401
@@ -103,3 +109,5 @@ def login():
     token = user.get_token()
     return jsonify({"token": token}), 200
 
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
