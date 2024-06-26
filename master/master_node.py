@@ -38,6 +38,7 @@ def create_worker_jobs(num_mappers, num_reducers):
                             {
                                 "name": "worker",
                                 "image": "dkeramidas1/worker_node:v01",
+                                "imagePullPolicy": "Always",
                                 "env": [
                                     {"name": "MODE", "value": "mapper"},
                                     {"name": "ZOOKEEPER_HOST", "value": "zk-cs.sad.svc.cluster.local:2181"},
@@ -45,13 +46,14 @@ def create_worker_jobs(num_mappers, num_reducers):
                                 ]
                             }
                         ],
-                        "restartPolicy": "Always"
+                        "restartPolicy": "OnFailure"
                     }
                 },
                 "backoffLimit": 4
             }
         }
-        create_job(batch_v1, job_manifest)
+        result = create_job(batch_v1, job_manifest)
+        # results.append({job_name: result})
 
     # Create reducers
     for i in range(num_reducers):
@@ -68,6 +70,7 @@ def create_worker_jobs(num_mappers, num_reducers):
                             {
                                 "name": "worker",
                                 "image": "dkeramidas1/worker_node:v01",
+                                "imagePullPolicy": "Always",
                                 "env": [
                                     {"name": "MODE", "value": "reducer"},
                                     {"name": "ZOOKEEPER_HOST", "value": "zk-cs.sad.svc.cluster.local:2181"},
@@ -76,13 +79,14 @@ def create_worker_jobs(num_mappers, num_reducers):
                                 ]
                             }
                         ],
-                        "restartPolicy": "Always"
+                        "restartPolicy": "OnFailure"
                     }
                 },
                 "backoffLimit": 4
             }
         }
-        create_job(batch_v1, job_manifest)
+        result = create_job(batch_v1, job_manifest)
+        # results.append({job_name: result})
 
 if __name__ == "__main__":
     num_mappers = 3#int(os.getenv('NUM_MAPPERS', 3))

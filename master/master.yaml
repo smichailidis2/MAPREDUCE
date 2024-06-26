@@ -8,6 +8,7 @@ spec:
   selector:
     matchLabels:
       app: master
+  revisionHistoryLimit: 0
   template:
     metadata:
       labels:

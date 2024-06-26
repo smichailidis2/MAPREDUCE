@@ -2,15 +2,18 @@ default:
 	@make -C master
 	
 build:
-	@make -C worker
+	@make -C worker build
 	@make -C master build
 
 appclean:
 	@kubectl delete deployment master
 
-zoo:
+util:
 	@kubectl apply -f zookeper/
+	@kubectl wait --for=condition=ready pod zk-0 -n sad --timeout=120s
+	@kubectl wait --for=condition=ready pod zk-1 -n sad --timeout=120s
+	@kubectl wait --for=condition=ready pod zk-2 -n sad --timeout=120s
 
-clean:
+cleanutil:
 	@kubectl delete --all all --namespace=sad
 	@kubectl delete pvc datadir-zk-2 datadir-zk-1 datadir-zk-0

@@ -1,5 +1,5 @@
 # Use a base Python image
-FROM python:3.10
+FROM python:3.12-alpine
 
 # Set the working directory
 WORKDIR /app
@@ -14,5 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY master_node.py .
 
 # Specify the default command
-# CMD ["tail", "-f", "/dev/null"]
-CMD ["sleep", "10000"]
+CMD ["tail", "-f", "/dev/null"]
