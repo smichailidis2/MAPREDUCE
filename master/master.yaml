@@ -17,6 +17,7 @@ spec:
       containers:
       - name: master
         image: dkeramidas1/master_node:v01
+        imagePullPolicy: Always
         env:
         - name: ZOOKEEPER_HOST
           value: "zk-cs.sad.svc.cluster.local:2181"
@@ -46,7 +47,7 @@ metadata:
 rules:
 - apiGroups: ["batch"]
   resources: ["jobs"]
-  verbs: ["create"]
+  verbs: ["create","delete","deletecollection","get","list","patch","update","watch"]
 
 ---
 

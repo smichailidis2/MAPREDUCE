@@ -1,5 +1,6 @@
 default:
 	@kubectl apply -f .
+	@kubectl rollout restart master
 
 build:
 	@docker build -t dkeramidas1/master_node:v01 .
