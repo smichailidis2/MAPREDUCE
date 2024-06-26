@@ -12,6 +12,7 @@ spec:
     metadata:
       labels:
         app: master
+        namespace: sad
     spec:
       containers:
       - name: master
