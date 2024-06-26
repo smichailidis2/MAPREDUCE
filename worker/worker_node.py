@@ -14,19 +14,20 @@ def initialize_zookeeper():
 def mapper():
     # print("Running mapper task.")
     # Mapper logic here
+    print("Mapped!!!\n")
     
-    if(zk.exists(f"/mapreduce/inmapper_{node_id}.txt")):
-        data, stat = zk.get(f"/mapreduce/inmapper_{node_id}.txt")
+    # if(zk.exists(f"/mapreduce/inmapper_{node_id}.txt")):
+    #     data, stat = zk.get(f"/mapreduce/inmapper_{node_id}.txt")
     
-    results = []
-    words = data.decode("utf-8").split()
-    for word in words:
-        results.append((word, 1))
+    # results = []
+    # words = data.decode("utf-8").split()
+    # for word in words:
+    #     results.append((word, 1))
     
-    if(zk.exists(f"/mapreduce/shuffled_{node_id}.txt")):
-        zk.set(f"/mapreduce/shuffled_{node_id}.txt", shuffler(results).encode("utf-8"))
-    else:
-        zk.create(f"/mapreduce/shuffled_{node_id}.txt", shuffler(results).encode("utf-8"))
+    # if(zk.exists(f"/mapreduce/shuffled_{node_id}.txt")):
+    #     zk.set(f"/mapreduce/shuffled_{node_id}.txt", shuffler(results).encode("utf-8"))
+    # else:
+    #     zk.create(f"/mapreduce/shuffled_{node_id}.txt", shuffler(results).encode("utf-8"))
 
 def shuffler(mapped_data):
     # print("Running shuffler task.")
@@ -42,17 +43,18 @@ def shuffler(mapped_data):
 def reducer():
     # print("Running reducer task.")
     # Reducer logic here
-    if(zk.ensure_path(f"/mapreduce/inshuffler_{node_id}.txt")):
-        shuffled_data, stat = zk.get(f"/mapreduce/inshuffler_{node_id}.txt")
+    print("Reduced!!!\n")
+    # if(zk.ensure_path(f"/mapreduce/inshuffler_{node_id}.txt")):
+    #     shuffled_data, stat = zk.get(f"/mapreduce/inshuffler_{node_id}.txt")
     
-    reduced_data = []
-    for key, values in shuffled_data.decode("utf-8").items():
-        reduced_data.append((key, sum(values)))
+    # reduced_data = []
+    # for key, values in shuffled_data.decode("utf-8").items():
+    #     reduced_data.append((key, sum(values)))
     
-    if(zk.exists(f"/mapreduce/reduced_{node_id}.txt")):
-        zk.set(f"/mapreduce/reduced_{node_id}.txt", shuffler(reduced_data).encode("utf-8"))
-    else:
-        zk.create(f"/mapreduce/reduced_{node_id}.txt", shuffler(reduced_data).encode("utf-8"))
+    # if(zk.exists(f"/mapreduce/reduced_{node_id}.txt")):
+    #     zk.set(f"/mapreduce/reduced_{node_id}.txt", shuffler(reduced_data).encode("utf-8"))
+    # else:
+    #     zk.create(f"/mapreduce/reduced_{node_id}.txt", shuffler(reduced_data).encode("utf-8"))
 
 if __name__ == "__main__":
     zk = initialize_zookeeper()
