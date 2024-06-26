@@ -13,17 +13,17 @@ USER_DATA_DIR = '/path/to/user_data' #todo
 def get_user_file_path(username): #todo
     return os.path.join(USER_DATA_DIR, f'{username}.json')
 
-def create_user(username, password):
+def create_user(username, passwordin):
     if os.path.exists(get_user_file_path(username)):
         return False, "User already exists"
     
-    user_data = {
-        "username": username,
-        "password_hash": password=generate_password_hash(password1, method='pbkdf2:sha256'),
-        "token": str(uuid.uuid4())
-    }
+    # user_data = f"{ "username": {username}, "password_hash": {generate_password_hash(passwordin, method='pbkdf2:sha256')}, "token": str(uuid.uuid4())}"
+    user_data = {}
+    user_data["username"] = username
+    user_data["password"] = generate_password_hash(passwordin, method='pbkdf2:sha256')
+    user_data["token"] = str(uuid.uuid4())
     
-    with open(user_file_path, 'w') as user_file:
+    with open(USER_DATA_DIR, 'w') as user_file:
         json.dump(user_data, user_file)
     
     return True, "User created successfully"
@@ -95,7 +95,7 @@ def login():
     username = data.get('username')
     password = data.get('password')
 
-    user = User.query.filter_by(username=username).first()
+    user = Flask.User.query.filter_by(username=username).first()
 
     if not user or not check_password_hash(user.password, password):
         return jsonify({"message": "Invalid credentials"}), 401
