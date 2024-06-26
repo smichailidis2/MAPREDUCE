@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mapreduce-reducer
+  namespace: sad
+spec:
+  template:
+    metadata:
+      labels:
+        app: mapreduce-reducer
+    spec:
+      containers:
+      - name: reducer
+        image: dkeramidas1/worker_node:v01
+        env:
+          - name: MODE
+            value: "reducer"
+          - name: ZOOKEEPER_HOST
+            value: "zk-cs.sad.svc.cluster.local:2181"
+          - name: NAMESPACE
+            value: "sad"
+          - name: NODE_ID
+            value: "unique-reducer-id"
+        imagePullPolicy: Always
+      restartPolicy: OnFailure
