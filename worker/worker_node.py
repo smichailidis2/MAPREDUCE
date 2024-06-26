@@ -14,7 +14,7 @@ def mapper():
     print("Running mapper task.")
     # Mapper logic here
     
-    data, stat = zk.get(f"/tomapp_{node_id}.txt")
+    data, stat = zk.get(f"/tomapp_{node_id}")
     
     results = {}
     words = data.decode("utf-8").split()
@@ -30,11 +30,11 @@ def mapper():
 def shuffler(mapped_data):
     print("Running shuffler task.")
     # Shuffler logic here
-    
-    for key, value in mapped_data:
-        print(f"{key}, {value}")
+
+    for key in mapped_data:
+        print(f"{key}, {mapped_data[key]}")
         zk.ensure_path(f"/mapp_{node_id}/{key}")
-        zk.set(f"/mapp_{node_id}/{key}", (f"\"{key}\": {value}").encode("utf-8"))
+        zk.set(f"/mapp_{node_id}/{key}", (str(mapped_data[key])).encode("utf-8"))
     
     print("Shuffled!!!\n")
 
@@ -42,17 +42,17 @@ def reducer():
     print("Running reducer task.")
     # Reducer logic here
     
-    data, stat = zk.get(f"/toreduce_{node_id}.txt")
-    
-    results = []
-    words = data.decode("utf-8")
-    for word in words:
-        results.append((word, 1))
-    
-    print("Mapped!!!\n")
+    data, stat = zk.get(f"/toreduce_{node_id}")
+    d = dict(data.decode("utf-8"))
+    results = {}
+    for word in d:
+        print(f"{word}::: {d}: {d[word]}")
+        if word not in results:
+            results[word] = 0
+        results[word] += sum(d[word])
 
-    shuffler(results)
-
+    zk.ensure_path(f"/reduce_{node_id}")
+    zk.set(f"/reduce_{node_id}", (f"{results}").encode("utf-8"))
     print("Reduced!!!\n")
 
 if __name__ == "__main__":
@@ -64,8 +64,10 @@ if __name__ == "__main__":
 
     if mode == 'mapper':
         mapper()
+        zk.ensure_path(f"mapper_done_{node_id}")
     elif mode == 'reducer':
         reducer()
+        zk.ensure_path(f"reducer_done_{node_id}")
 
     print(f"Node {node_id} completed {mode} task.")
     zk.stop()
