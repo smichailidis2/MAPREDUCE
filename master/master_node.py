@@ -1,15 +1,19 @@
 import os
-import sys
+from flask import Flask, request, jsonify
 from kazoo.client import KazooClient
 from kubernetes import client, config
-import time
-import json
+
+app = Flask(__name__)
+job_id = 0
+jid = 0
+zk_host = os.getenv('ZOOKEEPER_HOST')
 
 def initialize_zookeeper():
-    zk_host = os.getenv('ZOOKEEPER_HOST')
     zk = KazooClient(hosts=zk_host)
     zk.start()
     return zk
+
+zk = initialize_zookeeper()
 
 def create_job(api_instance, job_manifest, mode, id):
     try:
@@ -37,6 +41,7 @@ def create_worker_jobs(num_mappers, num_reducers):
             "kind": "Job",
             "metadata": {"name": job_name, "namespace": "sad"},
             "spec": {
+                "ttlSecondsAfterFinished": 5,
                 "template": {
                     "metadata": {"labels": {"app": "worker", "type": "mapper"}},
                     "spec": {
@@ -47,7 +52,7 @@ def create_worker_jobs(num_mappers, num_reducers):
                                 "imagePullPolicy": "Always",
                                 "env": [
                                     {"name": "MODE", "value": "mapper"},
-                                    {"name": "ZOOKEEPER_HOST", "value": "zk-cs.sad.svc.cluster.local:2181"},
+                                    {"name": "ZOOKEEPER_HOST", "value": zk_host},
                                     {"name": "NAMESPACE", "value": "sad"},
                                     {"name": "NODE_ID", "value": str(i)},
                                     {"name": "WORDS", "value": "none"},
@@ -96,6 +101,7 @@ def create_worker_jobs(num_mappers, num_reducers):
             "kind": "Job",
             "metadata": {"name": job_name, "namespace": "sad"},
             "spec": {
+                "ttlSecondsAfterFinished": 5,
                 "template": {
                     "metadata": {"labels": {"app": "worker", "type": "reducer"}},
                     "spec": {
@@ -106,7 +112,7 @@ def create_worker_jobs(num_mappers, num_reducers):
                                 "imagePullPolicy": "Always",
                                 "env": [
                                     {"name": "MODE", "value": "reducer"},
-                                    {"name": "ZOOKEEPER_HOST", "value": "zk-cs.sad.svc.cluster.local:2181"},
+                                    {"name": "ZOOKEEPER_HOST", "value": zk_host},
                                     {"name": "NAMESPACE", "value": "sad"},
                                     {"name": "NODE_ID", "value": str(i)},
                                     {"name": "WORDS", "value": data_to_reduce[i]},
@@ -146,23 +152,24 @@ def create_worker_jobs(num_mappers, num_reducers):
     
     zk.set(f"/jobres_{jid}",(f"mapreduceres").encode("utf-8"))
 
+    return mapreduceres
 
-if __name__ == "__main__":
-    num_mappers = int(os.getenv('NUM_MAPPERS', 3))
-    num_reducers = int(os.getenv('NUM_REDUCERS', 2))
+@app.route('/submit_job', method=['POST'])
+def submit_job():
+    data = request.get_json()
     
-    jid = int(os.getenv('JOB_ID',0))
-
-    zk = initialize_zookeeper()
-    # zk.ensure_path("/tasks")
+    num_mappers = int(data.get('mapper_num'))
+    num_reducers = int(data.get('reducer_num'))
+    if not num_mappers or not num_reducers:
+        return jsonify({'error': 'mapper_num, reducer_num required in the payload'})
+    jid = job_id
+    job_id += 1
 
     zk.ensure_path(f"/job_{jid}_inprocess")
 
     zk.ensure_path(f"/jobfiles_{jid}")
 
-    zk.ensure_path(f"/user_in_job_{jid}")
-    zk.set(f"/user_in_job_{jid}", ("3 2 1").encode("utf-8"))
-    
+    # To be removed when client implemented    
     zk.ensure_path(f"/user_in_data_{jid}")
     zk.set(f"/user_in_data_{jid}",("word alpha beta alpha alpha word alpha beta\nword alpha beta alpha\nalpha word alpha beta gamma\nword alpha beta alpha\nalpha word alpha beta delta").encode("utf-8"))
 
@@ -170,9 +177,6 @@ if __name__ == "__main__":
     userData, _ = zk.get(f"/user_in_data_{jid}")
 
     userIn = userIn.decode("utf-8").split()
-    num_mappers = int(userIn[0])
-    num_reducers = int(userIn[1]) 
-    jid = int(userIn[2]) 
         
     userData = userData.decode("utf-8").split('\n')
     dataToMapp = [""]*num_mappers
@@ -180,11 +184,17 @@ if __name__ == "__main__":
         dataToMapp[i % num_mappers] += line
         dataToMapp[i % num_mappers] += " "
 
-    create_worker_jobs(num_mappers, num_reducers)
+    resdata = create_worker_jobs(num_mappers, num_reducers)
     
     print("Tasks assigned and jobs created.")
-    zk.delete(f"/job_{jid}_inprocess",-1,True)
-    
-    zk.delete(f"/jobfiles_{jid}",-1,True)
 
+    zk.delete(f"/job_{jid}_inprocess",-1,True)
+    zk.delete(f"/jobfiles_{jid}",-1,True)
+    zk.delete(f"/user_in_job_{jid}",-1,True)
+    zk.delete(f"/user_in_data_{jid}",-1,True)
+    
     zk.stop()
+    return jsonify({'res': resdata})
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5000)    

@@ -1,6 +1,10 @@
 default:
 	@make -C master
-	
+
+all:
+	@make util
+	@make -C master
+
 build:
 	@make -C worker build
 	@make -C master build

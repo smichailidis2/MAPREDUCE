@@ -16,7 +16,7 @@ spec:
         namespace: sad
     spec:
       containers:
-      - name: master
+      - name: master-node
         image: dkeramidas1/master_node:v01
         imagePullPolicy: Always
         env:
@@ -24,10 +24,6 @@ spec:
           value: "zk-cs.sad.svc.cluster.local:2181"
         - name: NAMESPACE
           value: sad
-        - name: NUM_MAPPERS
-          value: "3"
-        - name: NUM_REDUCERS
-          value: "2"
       serviceAccountName: job-creator
 
 ---
