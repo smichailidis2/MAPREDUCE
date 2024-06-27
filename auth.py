@@ -12,10 +12,10 @@ USER_FILE = '/data/users/'
 
 
 if not os.path.exists(USER_FILE):
-    with open(USER_FILE, 'w') as f:
-        json.dump({}, f)
+    os.makedirs(USER_FILE)
 
-def get_user_file_path(username): #todo
+
+def get_user_file_path(username): 
     return os.path.join(USER_FILE, f'{username}.json')
 
 def create_user(username, password):
@@ -23,6 +23,8 @@ def create_user(username, password):
     if os.path.exists(user_file_path):
         return False, "User already exists"
     
+    user_data = {}
+
     user_data["username"] = username
     user_data["password_hash"] = generate_password_hash(password, method='pbkdf2:sha256')
     user_data["token"] = str(uuid.uuid4())
@@ -66,6 +68,7 @@ def update_user(username, user_data):
     with open(user_file_path, 'w') as user_file:
         json.dump(user_data, user_file)
 
+#for user deletion
 def token_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -95,19 +98,17 @@ def register():
     user_data = get_user(username)
     return jsonify({"message": "User registered successfully", "token": user_data['token']}), 201
 
-@app.route('/login', methods=['POST']) #
+@app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
 
-    user = User.query.filter_by(username=username).first()
-
-    if not user or not check_password_hash(user.password, password):
+    user_data = get_user(username)
+    if not user_data or not check_password_hash(user_data['password_hash'], password):
         return jsonify({"message": "Invalid credentials"}), 401
 
-    token = user.get_token()
-    return jsonify({"token": token}), 200
+    return jsonify({"token": user_data['token']}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
