@@ -14,4 +14,4 @@ def generate_large_file(filename, target_size_mb, word_list):
 if __name__ == "__main__":
     words = ["alpha", "beta", "gamma", "delta", "dimitris", "stergios", "george", "vsam", "tuc"]
 
-    generate_large_file('input_data.txt', 200, words)
+    generate_large_file('input_data.txt', 100, words)

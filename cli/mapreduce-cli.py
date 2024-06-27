@@ -36,8 +36,8 @@ def login(username, password):
         click.echo(f"Failed to login: {response.text}")
 
 @click.command()
-@click.option('--num-mappers', required=True, type=int, help="Number of mapper jobs")
-@click.option('--num-reducers', required=True, type=int, help="Number of reducer jobs")
+@click.option('--num-mappers', default=3, type=int, help="Number of mapper jobs (default: 3)")
+@click.option('--num-reducers', default=2, type=int, help="Number of reducer jobs (default: 2)")
 def submit_job(num_mappers, num_reducers):
     """Submit a new MapReduce job to the master service."""
     payload = {
@@ -50,6 +50,7 @@ def submit_job(num_mappers, num_reducers):
         click.echo(response.json())
     else:
         click.echo(f"Failed to submit job: {response.status_code} - {response.text}")
+
 
 # Adding commands to the CLI group
 cli.add_command(register)
