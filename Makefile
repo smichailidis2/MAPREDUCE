@@ -5,16 +5,19 @@ all:
 	@make util
 	@make -C master
 	@make authe
+	@make cli
 
 build:
 	@make -C worker build
 	@make -C master build
 	@make -C auth build
+	@make -C cli build
 	
 publish:
 	@make -C worker publish
 	@make -C master publish
 	@make -C auth publish
+	@make -C cli publish
 
 appclean:
 	@kubectl delete deployment master
@@ -22,6 +25,10 @@ appclean:
 util:
 	@make zoo
 	@make authe
+	@make cli
+
+cli:
+	@make -C cli
 
 zoo:
 	@kubectl apply -f zookeper/

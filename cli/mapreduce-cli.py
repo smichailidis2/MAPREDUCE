@@ -2,8 +2,8 @@ import click
 import requests
 
 # URLs for services
-REGISTRATION_URL = "http://flask-app-pod.sad.svc.cluster.local:5001/register"
-LOGIN_URL = "http://flask-app-pod.sad.svc.cluster.local:5001/login"
+REGISTRATION_URL = "http://flask-app-service.sad.svc.cluster.local:5001/register"
+LOGIN_URL = "http://flask-app-service.sad.svc.cluster.local:5001/login"
 JOB_SUBMISSION_URL = "http://master-service.sad.svc.cluster.local:5000/submit_job"
 
 @click.group()

@@ -1,0 +1,14 @@
+apiVersion: batch/v1
+kind: Pod
+metadata:
+  name: cli-interface
+  namespace: sad
+spec:
+  containers:
+    - name: mapreduce-cli
+      image: dkeramidas1/mapreduce-cli:v01
+      imagePullPolicy: Always
+      stdin: true
+      tty: true
+      command: ["sleep"]
+      args: ["inifinity"]
