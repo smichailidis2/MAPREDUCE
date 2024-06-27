@@ -90,8 +90,8 @@ def create_worker_jobs(num_mappers, num_reducers):
     data_to_reduce  = [""]*num_reducers 
 
     for i, word in enumerate(all_words_to_reduce):
-        data_to_reduce[(i+1) % num_reducers] += word
-        data_to_reduce[(i+1) % num_reducers] += " "
+        data_to_reduce[i % num_reducers] += word
+        data_to_reduce[i % num_reducers] += " "
 
     # Create reducers
     for i in range(num_reducers):
@@ -154,14 +154,14 @@ def create_worker_jobs(num_mappers, num_reducers):
 
     return mapreduceres
 
-@app.route('/submit_job', method=['POST'])
+@app.route('/submit_job', methods=['POST'])
 def submit_job():
     data = request.get_json()
     
     num_mappers = int(data.get('mapper_num'))
     num_reducers = int(data.get('reducer_num'))
     if not num_mappers or not num_reducers:
-        return jsonify({'error': 'mapper_num, reducer_num required in the payload'})
+        return jsonify({'error': 'mapper_num, reducer_num required in the payload'}), 400
     jid = job_id
     job_id += 1
 
@@ -194,7 +194,7 @@ def submit_job():
     zk.delete(f"/user_in_data_{jid}",-1,True)
     
     zk.stop()
-    return jsonify({'res': resdata})
+    return jsonify({'res': resdata}), 200
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)    
