@@ -8,10 +8,8 @@ spec:
     app: flask-app
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 5000
-  type: LoadBalancer  # Or ClusterIP, NodePort, etc.
-
+      port: 5001
+      targetPort: 5001
 
 ---
 
@@ -25,16 +23,17 @@ spec:
   containers:
   - name: flask-app-container
     image: dkeramidas1/auth_node:v01
+    imagePullPolicy: Always
     ports:
-    - containerPort: 5000
+    - containerPort: 5001
     volumeMounts:
     - name: user-data-volume
-      mountPath: /data  # Mount path within the container
+      mountPath: /data
+  restartPolicy: Always
+  serviceAccountName: flask-app-sa
   volumes:
   - name: user-data-volume
-    emptyDir: {}  # Creates an empty directory for local storage
-  restartPolicy: Always
-
+    emptyDir: {}
 
 ---
 

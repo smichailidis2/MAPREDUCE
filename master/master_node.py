@@ -154,6 +154,7 @@ def create_worker_jobs(num_mappers, num_reducers):
 
     return mapreduceres
 
+# Ip: http://master-service.sad.svc.cluster.local:5000
 @app.route('/submit_job', methods=['POST'])
 def submit_job():
     data = request.get_json()
