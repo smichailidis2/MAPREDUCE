@@ -27,11 +27,11 @@ def create_worker_jobs(num_mappers, num_reducers):
 
     # Create mappers
     for i in range(num_mappers):
-        print(f"Mapper {i}")
-        zk.ensure_path(f"/tomapp_{i}")
-        zk.set (f"/tomapp_{i}",("word alpha beta alpha alpha word alpha beta").encode("utf-8"))
+        zk.ensure_path(f"/jobfiles_{jid}/tomapp_{i}")
+        zk.set(f"/jobfiles_{jid}/tomapp_{i}",dataToMapp[i].encode("utf-8"))
+        # zk.set (f"/jobfiles_{jid}/tomapp_{i}",("word alpha beta alpha\nalpha word alpha beta").encode("utf-8"))
         
-        job_name = f"worker-mapper-{i}"
+        job_name = f"worker-mapper-{jid}{i}"
         job_manifest = {
             "apiVersion": "batch/v1",
             "kind": "Job",
@@ -49,7 +49,10 @@ def create_worker_jobs(num_mappers, num_reducers):
                                     {"name": "MODE", "value": "mapper"},
                                     {"name": "ZOOKEEPER_HOST", "value": "zk-cs.sad.svc.cluster.local:2181"},
                                     {"name": "NAMESPACE", "value": "sad"},
-                                    {"name": "NODE_ID", "value": str(i)}
+                                    {"name": "NODE_ID", "value": str(i)},
+                                    {"name": "WORDS", "value": "none"},
+                                    {"name": "MAPPERS", "value": "0"},
+                                    {"name": "JOB_ID", "value": str(jid)}
                                 ]
                             }
                         ],
@@ -62,11 +65,10 @@ def create_worker_jobs(num_mappers, num_reducers):
         result = create_job(batch_v1, job_manifest, "Mapper", i)
         # results.append({job_name: result})
     
-    print(f"Mappers instanciated.")
     while True:
         all_done = True
         for i in range(num_mappers):
-            if not zk.exists(f"mapper_done_{i}"):
+            if not zk.exists(f"/jobfiles_{jid}/mapper_done_{i}"):
                 all_done = False
                 break
         if all_done:
@@ -74,37 +76,21 @@ def create_worker_jobs(num_mappers, num_reducers):
 
     print(f"Mappers returned.")
     
-    data_to_reduce  = {}
+    all_words_to_reduce = []
     for i in range(num_mappers):
-        for child in zk.get_children(f"/mapp_{i}"):
-                data, stat = zk.get(f"/mapp_{i}/{child}")
-                d = data.decode("utf-8")
-                if child not in data_to_reduce:
-                    data_to_reduce[child] = []
-                data_to_reduce[child].append(int(d))
-                
-    print(f"dr: {data_to_reduce}")
-    toreduce = []
-    for i in range(num_reducers):
-        toreduce.append({})
+        for child in zk.get_children(f"/jobfiles_{jid}/mapp_{i}"):
+                if str(child) not in all_words_to_reduce:
+                    all_words_to_reduce.append(str(child))
+        
+    data_to_reduce  = [""]*num_reducers 
 
-    print(toreduce)
-
-    for i, word in enumerate(data_to_reduce):
-        if word not in toreduce[num_mappers % (i+1)]:
-            toreduce[num_mappers % (i+1)][word] = []
-        toreduce[num_mappers % (i+1)][word].extend(data_to_reduce[word])
-    
-    print(toreduce)
-
-    for i in range(num_reducers):
-        print(f"{i}: {toreduce[i]}")
-        zk.ensure_path(f"/toreduce_{i}")
-        zk.set(f"/toreduce_{i}", (f"{toreduce[i]}").encode("utf-8"))
+    for i, word in enumerate(all_words_to_reduce):
+        data_to_reduce[(i+1) % num_reducers] += word
+        data_to_reduce[(i+1) % num_reducers] += " "
 
     # Create reducers
     for i in range(num_reducers):
-        job_name = f"worker-reducer-{i}"
+        job_name = f"worker-reducer-{jid}{i}"
         job_manifest = {
             "apiVersion": "batch/v1",
             "kind": "Job",
@@ -123,7 +109,9 @@ def create_worker_jobs(num_mappers, num_reducers):
                                     {"name": "ZOOKEEPER_HOST", "value": "zk-cs.sad.svc.cluster.local:2181"},
                                     {"name": "NAMESPACE", "value": "sad"},
                                     {"name": "NODE_ID", "value": str(i)},
-                                    {"name": "WORDS", "value": ""}
+                                    {"name": "WORDS", "value": data_to_reduce[i]},
+                                    {"name": "MAPPERS", "value": str(num_mappers)},
+                                    {"name": "JOB_ID", "value": str(jid)}
                                 ]
                             }
                         ],
@@ -136,11 +124,10 @@ def create_worker_jobs(num_mappers, num_reducers):
         result = create_job(batch_v1, job_manifest, "reduce", i)
         # results.append({job_name: result})
         
-    print(f"Reducers instanciated.")
     while True:
         all_done = True
         for i in range(num_reducers):
-            if not zk.exists(f"reducer_done_{i}"):
+            if not zk.exists(f"/jobfiles_{jid}/reducer_done_{i}"):
                 all_done = False
                 break
         if all_done:
@@ -150,20 +137,54 @@ def create_worker_jobs(num_mappers, num_reducers):
     
     mapreduceres = {}
     for i in range(num_reducers):
-        data,_ = zk.get(f"/reduce_{i}")
-        mapreduceres.update(data.decode("utf-8"))
+        data,_ = zk.get(f"/jobfiles_{jid}/reduce_{i}")
+        mapreduceres.update(eval(data.decode("utf-8")))
     
     print(mapreduceres)
 
+    zk.ensure_path(f"/jobres_{jid}")
+    
+    zk.set(f"/jobres_{jid}",(f"mapreduceres").encode("utf-8"))
+
 
 if __name__ == "__main__":
-    num_mappers = 3#int(os.getenv('NUM_MAPPERS', 3))
-    num_reducers = 2#int(os.getenv('NUM_REDUCERS', 2))
+    num_mappers = int(os.getenv('NUM_MAPPERS', 3))
+    num_reducers = int(os.getenv('NUM_REDUCERS', 2))
+    
+    jid = int(os.getenv('JOB_ID',0))
 
     zk = initialize_zookeeper()
     # zk.ensure_path("/tasks")
+
+    zk.ensure_path(f"/job_{jid}_inprocess")
+
+    zk.ensure_path(f"/jobfiles_{jid}")
+
+    zk.ensure_path(f"/user_in_job_{jid}")
+    zk.set(f"/user_in_job_{jid}", ("3 2 1").encode("utf-8"))
     
+    zk.ensure_path(f"/user_in_data_{jid}")
+    zk.set(f"/user_in_data_{jid}",("word alpha beta alpha alpha word alpha beta\nword alpha beta alpha\nalpha word alpha beta gamma\nword alpha beta alpha\nalpha word alpha beta delta").encode("utf-8"))
+
+    userIn, _ = zk.get(f"/user_in_job_{jid}")
+    userData, _ = zk.get(f"/user_in_data_{jid}")
+
+    userIn = userIn.decode("utf-8").split()
+    num_mappers = int(userIn[0])
+    num_reducers = int(userIn[1]) 
+    jid = int(userIn[2]) 
+        
+    userData = userData.decode("utf-8").split('\n')
+    dataToMapp = [""]*num_mappers
+    for i, line in enumerate(userData):
+        dataToMapp[i % num_mappers] += line
+        dataToMapp[i % num_mappers] += " "
+
     create_worker_jobs(num_mappers, num_reducers)
     
     print("Tasks assigned and jobs created.")
+    zk.delete(f"/job_{jid}_inprocess",-1,True)
+    
+    zk.delete(f"/jobfiles_{jid}",-1,True)
+
     zk.stop()
