@@ -7,6 +7,7 @@ app = Flask(__name__)
 job_id = 0
 jid = 0
 zk_host = os.getenv('ZOOKEEPER_HOST')
+dataToMapp = []
 
 def initialize_zookeeper():
     zk = KazooClient(hosts=zk_host)
@@ -157,6 +158,7 @@ def create_worker_jobs(num_mappers, num_reducers):
 # Ip: http://master-service.sad.svc.cluster.local:5000
 @app.route('/submit_job', methods=['POST'])
 def submit_job():
+    global dataToMapp
     data = request.get_json()
     
     num_mappers = int(data.get('mapper_num'))
