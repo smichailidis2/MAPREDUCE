@@ -1,11 +1,7 @@
 # MAPREDUCE - UI
 
-Submit Mapper Job:
+Submit Job:
 ```
-python mapreduce-cli.py submit_mapper --input-data path/to/mapper/input_data.txt --node-id unique-mapper-id
-```
+python mapreduce-cli.py submit_job --job-id 1 --num-mappers 3 --num-reducers 2 --input-data /path/to/your/input_data.txt
 
-Submit Reducer Job:
-```
-python mapreduce-cli.py submit_reducer --input-data path/to/reducer/input_data.txt --node-id unique-reducer-id
 ```
