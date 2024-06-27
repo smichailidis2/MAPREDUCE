@@ -1,3 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: master-service
+  namespace: sad
+spec:
+  selector:
+    app: master
+  ports:
+  - protocol: TCP
+    port: 5000
+    targetPort: 5000
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,18 +30,16 @@ spec:
         namespace: sad
     spec:
       containers:
-      - name: master
+      - name: master-node
         image: dkeramidas1/master_node:v01
         imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
         env:
         - name: ZOOKEEPER_HOST
           value: "zk-cs.sad.svc.cluster.local:2181"
         - name: NAMESPACE
           value: sad
-        - name: NUM_MAPPERS
-          value: "3"
-        - name: NUM_REDUCERS
-          value: "2"
       serviceAccountName: job-creator
 
 ---

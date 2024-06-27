@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY master_node.py .
 
 # Specify the default command
-CMD ["tail", "-f", "/dev/null"]
+CMD ["python", "master_node.py"]

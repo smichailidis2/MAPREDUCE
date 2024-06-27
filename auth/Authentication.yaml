@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-app-service
+  namespace: sad
+spec:
+  selector:
+    app: flask-app
+  ports:
+    - protocol: TCP
+      port: 5001
+      targetPort: 5001
+
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: flask-app-pod
+  labels:
+    app: flask-app
+spec:
+  containers:
+  - name: flask-app-container
+    image: dkeramidas1/auth_node:v01
+    imagePullPolicy: Always
+    ports:
+    - containerPort: 5001
+    volumeMounts:
+    - name: user-data-volume
+      mountPath: /data
+  restartPolicy: Always
+  serviceAccountName: flask-app-sa
+  volumes:
+  - name: user-data-volume
+    emptyDir: {}
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flask-app-sa
+  namespace: sad
+
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flask-app-rolebinding
+  namespace: sad
+subjects:
+- kind: ServiceAccount
+  name: flask-app-sa
+  namespace: sad
+roleRef:
+  kind: Role
+  name: flask-app-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: sad
+  name: flask-app-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "create", "delete"]
+
