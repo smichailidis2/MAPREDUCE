@@ -2,12 +2,11 @@ FROM python:3.12-alpine
 
 WORKDIR /app
 
+COPY mapreduce_cli.py .
 COPY requirements.txt .
+COPY input_data.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY mapreduce-cli.py .
-
-RUN chmod +x mapreduce-cli.py
-
-CMD ["python", "mapreduce-cli.py"]
+# Run the CLI tool when the container launches
+ENTRYPOINT ["python", "mapreduce_cli.py"]

@@ -1,35 +1,59 @@
 import click
-from kazoo.client import KazooClient
+import requests
 
-def connect_to_zookeeper():
-    """Connect to the ZooKeeper."""
-    zk_host = "zk-cs.sad.svc.cluster.local:2181"  # Adjust if necessary
-    zk = KazooClient(hosts=zk_host)
-    zk.start()
-    return zk
+# URLs for services
+REGISTRATION_URL = "http://flask-app-pod.sad.svc.cluster.local:5001/register"
+LOGIN_URL = "http://flask-app-pod.sad.svc.cluster.local:5001/login"
+JOB_SUBMISSION_URL = "http://master-service.sad.svc.cluster.local:5000/submit_job"
 
 @click.group()
 def cli():
-    """MapReduce Job Submission CLI."""
+    """MapReduce Job Submission and User Management CLI."""
     pass
 
 @click.command()
-@click.option('--job-id', required=True, type=int, help='Unique Job ID')
-@click.option('--num-mappers', required=True, type=int, help='Number of mappers')
-@click.option('--num-reducers', required=True, type=int, help='Number of reducers')
-@click.option('--input-data', type=click.File('rb'), help='File containing input data')
-def submit_job(job_id, num_mappers, num_reducers, input_data):
-    """Submit a new job to the system."""
-    zk = connect_to_zookeeper()
-    try:
-        job_input_path = f"/userin_job{job_id}"
-        job_data = f"{num_mappers} {num_reducers} {job_id}"
-        zk.ensure_path(job_input_path)
-        zk.set(job_input_path, job_data.encode('utf-8'))
-        click.echo("Input data successfully loaded to ZooKeeper.")
-    finally:
-        zk.stop()
+@click.option('--username', required=True, help="User's username")
+@click.option('--password', required=True, help="User's password")
+def register(username, password):
+    """Register a new user."""
+    payload = {'username': username, 'password': password}
+    response = requests.post(REGISTRATION_URL, json=payload)
+    if response.status_code == 200:
+        click.echo("Registration successful.")
+    else:
+        click.echo(f"Failed to register: {response.text}")
 
+@click.command()
+@click.option('--username', required=True, help="User's username")
+@click.option('--password', required=True, help="User's password")
+def login(username, password):
+    """Login a user."""
+    payload = {'username': username, 'password': password}
+    response = requests.post(LOGIN_URL, json=payload)
+    if response.status_code == 200:
+        click.echo("Login successful.")
+    else:
+        click.echo(f"Failed to login: {response.text}")
+
+@click.command()
+@click.option('--num-mappers', required=True, type=int, help="Number of mapper jobs")
+@click.option('--num-reducers', required=True, type=int, help="Number of reducer jobs")
+def submit_job(num_mappers, num_reducers):
+    """Submit a new MapReduce job to the master service."""
+    payload = {
+        'mapper_num': num_mappers,
+        'reducer_num': num_reducers
+    }
+    response = requests.post(JOB_SUBMISSION_URL, json=payload)
+    if response.status_code == 200:
+        click.echo("Job submitted successfully.")
+        click.echo(response.json())
+    else:
+        click.echo(f"Failed to submit job: {response.status_code} - {response.text}")
+
+# Adding commands to the CLI group
+cli.add_command(register)
+cli.add_command(login)
 cli.add_command(submit_job)
 
 if __name__ == '__main__':
