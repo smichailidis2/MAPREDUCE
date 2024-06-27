@@ -26,6 +26,6 @@ util:
 	@kubectl wait --for=condition=ready pod zk-2 -n sad --timeout=120s
 	@make -C auth
 
-cleanutil:
+cleanall:
 	@kubectl delete --all all --namespace=sad
 	@kubectl delete pvc datadir-zk-2 datadir-zk-1 datadir-zk-0
