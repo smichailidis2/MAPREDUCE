@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: run-client-script
+  namespace: sad
+spec:
+  template:
+    metadata:
+      labels:
+        app: run-client-script
+    spec:
+      containers:
+      - name: run-client-script
+        image: dkeramidas1/test:v01
+        imagePullPolicy: Always
+      restartPolicy: Never
+  backoffLimit: 1
+
+---
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: run-client-script-1
+  namespace: sad
+spec:
+  template:
+    metadata:
+      labels:
+        app: run-client-script
+    spec:
+      containers:
+      - name: run-client-script-1
+        image: dkeramidas1/test:v01
+        imagePullPolicy: Always
+      restartPolicy: Never
+  backoffLimit: 1
