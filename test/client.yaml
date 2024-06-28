@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: run-client-script
+  namespace: sad
+spec:
+  template:
+    metadata:
+      labels:
+        app: run-client-script
+    spec:
+      containers:
+      - name: run-client-script
+        image: dkeramidas1/test:v01  # Replace with your Docker image containing the script
+        command: ["python", "client_script.py"]
+      restartPolicy: Never
+  backoffLimit: 4

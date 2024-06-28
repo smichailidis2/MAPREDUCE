@@ -11,4 +11,4 @@ COPY generate_input.py .
 RUN python generate_input.py
 
 # Run the CLI tool when the container launches
-ENTRYPOINT ["python", "mapreduce_cli.py"]
+ENTRYPOINT ["tail", "-f", "/dev/null"]
