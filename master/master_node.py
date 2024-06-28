@@ -29,14 +29,16 @@ def create_worker_jobs(num_mappers, num_reducers):
     config.load_incluster_config()
     batch_v1 = client.BatchV1Api()
 
+    
+    userData, _ = zk.get(f"/user_in_data_{jid}")
+    userData = userData.decode("utf-8").split('\n')
+    dataToMapp = [""]*num_mappers
+    for i, line in enumerate(userData):
+        dataToMapp[i % num_mappers] += line
+        dataToMapp[i % num_mappers] += " "
+    
     # Create mappers
     for i in range(num_mappers):
-        userData, _ = zk.get(f"/user_in_data_{jid}")
-        userData = userData.decode("utf-8").split('\n')
-        dataToMapp = [""]*num_mappers
-        for i, line in enumerate(userData):
-            dataToMapp[i % num_mappers] += line
-            dataToMapp[i % num_mappers] += " "
 
         zk.ensure_path(f"/jobfiles_{jid}/tomapp_{i}")
         zk.set(f"/jobfiles_{jid}/tomapp_{i}",dataToMapp[i].encode("utf-8"))
@@ -164,6 +166,9 @@ def create_worker_jobs(num_mappers, num_reducers):
 # Ip: http://master-service.sad.svc.cluster.local:5000
 @app.route('/submit_job', methods=['POST'])
 def submit_job():
+    global zk, jid
+    zk = initialize_zookeeper()
+    global job_id
     data = request.get_json()
     
     num_mappers = int(data.get('mapper_num'))

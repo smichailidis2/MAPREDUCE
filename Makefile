@@ -4,8 +4,6 @@ default:
 all:
 	@make util
 	@make -C master
-	@make authe
-	@make cli
 
 build:
 	@make -C worker build

@@ -1,21 +1,34 @@
 # MAPREDUCE - UI
 
-Register:
-```
-docker run -it --rm mapreduce-cli register --username "user" --password "password"
+for testing
 
-```
+On a machine with kubectl and no pods running
+make all 
+creates the system (zookeeper,athentication,master_node)
 
-Login:
-```
-docker run -it --rm mapreduce-cli login --username "user" --password "password"
+Then 
+make -C test
+executes one test
 
+make -C test double 
+executes 2 test in parallel
 
-```
+Monitor worker pods
+kubectl get po -l app=worker -w
 
-Submit Job:
-```
-docker run -it --rm mapreduce-cli submit_job --num-mappers 3 --num-reducers 2
+Get Worker Logs (alive 5 secs after completing)
+kubectl logs -l app=worker
 
-```
+Whene done test job will stay alive for 30 seconds
+get output with
+kubectl logs -l app=run-client-script
 
+To delete everything use 
+make cleanall
+
+Other makes
+make zoo: makes the zookeper enviroment
+make build/publish: docker image build and push
+make appclean: delete only master
+make util: zoo, cli, auth
+make authe: auth

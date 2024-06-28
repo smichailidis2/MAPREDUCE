@@ -1,4 +1,5 @@
 default:
+	@kubectl delete pod cli-interface -n sad
 	@kubectl apply -f .
 
 build:
