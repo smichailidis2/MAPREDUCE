@@ -6,7 +6,7 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY mapreduce-cli.py .
+COPY mapreduce_cli.py .
 COPY generate_input.py .
 RUN python generate_input.py
 

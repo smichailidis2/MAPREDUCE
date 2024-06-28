@@ -10,5 +10,3 @@ spec:
       imagePullPolicy: Always
       stdin: true
       tty: true
-      command: ["sleep"]
-      args: ["inifinity"]

@@ -85,7 +85,7 @@ def token_required(f):
 config.load_incluster_config()  # Use within a Kubernetes cluster
 v1 = client.CoreV1Api()
 
-# Ip: http://flask-app-pod.sad.svc.cluster.local:5001
+# Ip: http://flask-app-service.sad.svc.cluster.local:5001
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -99,7 +99,7 @@ def register():
     user_data = get_user(username)
     return jsonify({"message": "User registered successfully", "token": user_data['token']}), 201
 
-# Ip: http://flask-app-pod.sad.svc.cluster.local:5001
+# Ip: http://flask-app-service.sad.svc.cluster.local:5001
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
