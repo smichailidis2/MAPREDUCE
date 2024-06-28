@@ -22,3 +22,13 @@ kubectl logs -l app=worker
 Whene done test job will stay alive for 30 seconds
 get output with
 kubectl logs -l app=run-client-script
+
+To delete everything use 
+make cleanall
+
+Other makes
+make zoo: makes the zookeper enviroment
+make build/publish: docker image build and push
+make appclean: delete only master
+make util: zoo, cli, auth
+make authe: auth
